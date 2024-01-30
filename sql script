@@ -1,0 +1,12 @@
+SELECT 
+customers.id,
+customers.first_name,
+(SELECT address FROM address WHERE address.customer_id = customers.id) address,
+(SELECT complement FROM address WHERE address.customer_id = customers.id) complement,
+(SELECT email FROM emails WHERE emails.customer_id = customers.id) email,
+(SELECT name FROM emails_areas WHERE emails_areas.id = (SELECT area_id FROM emails WHERE emails.customer_id = customers.id)) email_area,
+(SELECT name FROM citys WHERE citys.id = (SELECT city_id FROM address WHERE address.customer_id = customers.id)) city_name,
+(SELECT name FROM states WHERE id = (SELECT state_id FROM citys WHERE citys.id = (SELECT city_id FROM address WHERE address.customer_id = customers.id))) state,
+(SELECT name FROM countrys WHERE id = (SELECT country_id FROM states WHERE id = (SELECT state_id FROM citys WHERE citys.id = (SELECT city_id FROM address WHERE address.customer_id = customers.id)))) country
+FROM customers 
+LIMIT 10
