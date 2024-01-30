@@ -1,0 +1,115 @@
+import pandas as pd
+import pymysql
+
+#database config (Remote)
+config = {
+    'host': 'sql5.freemysqlhosting.net',
+    'user': 'sql5680613',
+    'password': 'F4HhCK6tku',
+    'database' : 'sql5680613',
+    'port': 3306,
+    'charset':'utf8mb4'
+}
+
+try:
+    con = pymysql.connect(**config)
+    con.autocommit(True)
+    cursor = con.cursor()
+except pymysql.MySQLError as e:
+    print(f'Erro: {e}')
+
+def read_csv_file(file_path):
+    df          = pd.read_csv(file_path)
+    df          = df.fillna('N/A')
+    num_records = len(df)
+    print(f"Number of records in the CSV file: {num_records}")
+    print(df)
+    return df.to_dict(orient='records')
+
+file_path=r"C:\Users\ferna\OneDrive\Escritorio\projects\database\MOCK_DATA.csv"
+
+csv_data = read_csv_file(file_path)
+
+newcountry  = 0
+newstate    = 0
+newcity     = 0
+newzip      = 0
+newcustomer = 0
+newaddress  = 0
+newemail    = 0
+
+
+area        = 'FINANCIAL'
+sql         = "INSERT INTO emails_areas(name) VALUES (%s)"
+cursor.execute(sql,(area))
+area_id = 1
+
+for row in csv_data:
+    #Validating Coutrys
+    country = row['country']
+    sql     = "SELECT id FROM countrys WHERE name=%s"
+    cursor.execute(sql, country)
+    result = cursor.fetchone()
+
+    if result is None:
+        newcountry = newcountry+1
+        sql = "INSERT INTO countrys(name) VALUES (%s)"
+        cursor.execute(sql, (country))
+        country_id  = cursor.lastrowid
+    else:
+        country_id = result[0]
+
+    #Validating States
+    state = row['state']
+    sql = "SELECT id FROM states WHERE name=%s AND country_id=%s"
+    cursor.execute(sql, (state, country_id))
+    result = cursor.fetchone()
+    if result is None:
+        newstate = newstate+1
+        sql = "INSERT INTO states(name,country_id) VALUES (%s, %s)"
+        cursor.execute(sql, (state, country_id))
+        state_id  = cursor.lastrowid
+    else:
+        state_id = result[0]
+    
+    #Validating States
+    city = row['city']  
+    sql = "SELECT id FROM citys WHERE name=%s AND state_id=%s"
+    cursor.execute(sql, (city, state_id))
+    result = cursor.fetchone()
+    if result is None:
+        newcity = newcity+1
+        sql = "INSERT INTO citys(name,state_id) VALUES (%s, %s)"
+        cursor.execute(sql, (city, state_id))
+        city_id  = cursor.lastrowid
+    else:
+        city_id = result[0]
+    
+    #Validating States
+    zip_code    = row['zip']
+    address     = row['address']
+    complement  = row['complement']
+    first_name  = row['first_name']
+    last_name   = row['last_name']
+    email       = row['email']
+
+    newcustomer = newcustomer+1
+    sql_customer = "INSERT INTO customers(first_name, last_name) VALUES (%s, %s)"
+    cursor.execute(sql_customer, (first_name, last_name))
+    customer_id  = cursor.lastrowid
+
+    newemail = newemail+1
+    sql_customer_email = "INSERT INTO emails(email, customer_id, area_id) VALUES (%s, %s, %s)"
+    cursor.execute(sql_customer_email, (email, customer_id, area_id))
+
+    newaddress = newaddress+1
+    sql_address = "INSERT INTO address(customer_id,address,complement, city_id, zip_code) VALUES (%s, %s, %s, %s, %s)"
+    cursor.execute(sql_address, (customer_id,address,complement, city_id, zip_code))
+    address_id  = cursor.lastrowid
+        
+print(f'New Countrys: {newcountry}')
+print(f'New States: {newstate}')
+print(f'New Citys: {newcity}')
+print(f'New Customers: {newcustomer}')
+print(f'New address: {newaddress}')
+print(f'New mails: {newemail}')
